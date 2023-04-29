@@ -162,6 +162,10 @@ def model_step(x, y, risk_factors, batch, models, optimizers, train_model,  args
         loss += args.pred_missing_mammos_lambda * pred_masked_mammo_loss
         reg_loss += args.pred_missing_mammos_lambda * pred_masked_mammo_loss
 
+    if args.dem_debias: 
+        gen_loss, adv_loss  = get_adv_loss(models, hidden, logit, batch, args)
+        adv_loss = adv_step(hidden, logit, batch, models, optimizers, train_model,  args)
+
     if args.use_adv:
         gen_loss, adv_loss  = get_adv_loss(models, hidden, logit, batch, args)
         # Noew train discrim til loss below device entropy across train set

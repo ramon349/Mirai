@@ -241,5 +241,3 @@ class MultiHead_Attention(nn.Module):
         output = self.aggregate_fc(h)
 
         return output
-
-

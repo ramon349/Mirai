@@ -272,7 +272,6 @@ def eval_model(test_data, models, args):
 
     return test_stats
 
-from collections import defaultdict 
 activation = defaultdict(list) 
 """ 
 def getActivation(name):
