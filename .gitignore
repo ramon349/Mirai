@@ -113,8 +113,12 @@ torchenv2/
 
 # run results
 /snapshot
-/logs
+/logs 
 
 # intellij
 .idea
 *.iml
+
+# additional Files 
+*.csv 
+snapshot*

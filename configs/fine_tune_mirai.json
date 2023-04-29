@@ -3,15 +3,15 @@
     "model_name":["mirai_full"],
     "img_encoder_snapshot":["snapshots/mgh_mammo_MIRAI_Base_May20_2019.p"],
     "transformer_snapshot":["snapshots/mgh_mammo_cancer_MIRAI_Transformer_Jan13_2020.p"],
-    "batch_size": [32],
-    "batch_splits": [16],
+    "batch_size": [8],
+    "batch_splits": [4],
     "cuda": [true],
     "dataset": ["csv_mammo_risk_all_full_future"],
     "metadata_path": ["demo/finetune_set.csv"],
     "img_mean": [7047.99],
     "img_size": [[1664, 2048]],
     "img_std": [12005.5],
-    "num_workers": [24],
+    "num_workers": [8],
     "train": [true],
     "dev":[false],
     "test": [true],
@@ -21,5 +21,5 @@
     "weight_decay": [5e-05],
     "freeze_image_encoder": [true, false]
     },
-  "available_gpus": [4,6]
+  "available_gpus": [7]
 }

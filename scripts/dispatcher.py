@@ -151,8 +151,10 @@ def update_sumary_with_results(result_path, log_path, experiment_axies,  summary
     return summary
 
 if __name__ == "__main__":
+    import pdb 
 
     args = parser.parse_args()
+    pdb.set_trace()
     if not os.path.exists(args.experiment_config_path):
         print(CONFIG_NOT_FOUND_MSG.format("experiment", args.experiment_config_path))
         sys.exit(1)

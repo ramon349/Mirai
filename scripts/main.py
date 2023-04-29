@@ -6,7 +6,7 @@ sys.path.append(dirname(dirname(realpath(__file__))))
 import torch
 import onconet.datasets.factory as dataset_factory
 import onconet.models.factory as model_factory
-from onconet.learn import train
+from onconet.learn import train_query as train 
 import onconet.transformers.factory as transformer_factory
 import onconet.visualize as visualize
 import onconet.utils.parsing as parsing
@@ -76,7 +76,6 @@ if __name__ == '__main__':
             print("\n Error loading previous state. \n Starting run from scratch.")
     else:
         print("\n Restarting run from scratch.")
-
 
     print("\nParameters:")
     for attr, value in sorted(args.__dict__.items()):
