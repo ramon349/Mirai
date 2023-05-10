@@ -115,8 +115,8 @@ def get_train_and_dev_dataset_loaders(args, train_data, dev_data, batch_size):
         returns:
         train_data_loader: iterator that returns batches
         dev_data_loader: iterator that returns batches
-    '''
-    if args.class_bal or args.year_weighted_class_bal:
+    ''' 
+    if args.class_bal or args.year_weighted_class_bal: 
         sampler = torch.utils.data.sampler.WeightedRandomSampler(
                 weights=train_data.weights,
                 num_samples=len(train_data),

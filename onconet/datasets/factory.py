@@ -50,7 +50,6 @@ def get_dataset(args, transformers, test_transformers):
     train = dataset_class(args, transformers, 'train')
     dev = dataset_class(args, test_transformers, 'dev')
     test = dataset_class(args, test_transformers, 'test')
-
     if args.survival_analysis_setup:
         args.censoring_distribution = get_censoring_dist(train if len(train) > 0 else test)
     if args.use_precomputed_hiddens:

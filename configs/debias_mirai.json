@@ -7,7 +7,7 @@
     "batch_splits": [2],
     "cuda": [true],
     "dataset": ["csv_mammo_risk_all_full_future_debias"],
-    "metadata_path": ["demo/finetune_set_finetune_set_w_dem.csv"],
+    "metadata_path": ["demo/demo_dataset.csv"],
     "img_mean": [7047.99],
     "img_size": [[1664, 2048]],
     "img_std": [12005.5],

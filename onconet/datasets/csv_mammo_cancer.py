@@ -325,7 +325,6 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
                     all_sides =  [0]*len(right_ccs) + [0]*len(right_mlos) + [1]*len(left_ccs) + [1]*len(left_mlos)
                     time_stamps =  [0]*len(all_images)
                     ethnic_info =self.encode_dem(exam['ethnicity'])
-
                     dataset.append({
                         'paths': pad_to_length(all_images, '<PAD>', self.args.num_images),
                         'y': y,
@@ -366,12 +365,14 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
 
         return (valid_pos or valid_neg) 
     def encode_dem(self,row): 
-        if row == 'African American  or Black':
+        if row == 'African American  or Black' or row=='0':
             return 0
-        if row == 'Asian':
+        if row == 'Asian' or row =='1':
             return 1 
-        if row == 'Caucasian or White':
+        if row == 'Caucasian or White' or row =='2':
             return 2 
+        else: 
+            return row 
 
 
     def get_label(self, row):

@@ -337,7 +337,7 @@ def run_epoch(data_loader, train_model, truncate_epoch, models, optimizers, args
             warnings.warn('Empty batch')
             continue
 
-        x, y, risk_factors, batch = prepare_batch(batch, args)
+        x, y, risk_factors, batch = prepare_batch(batch, args) 
 
         step_results = model_step(x, y, risk_factors, batch, models, optimizers, train_model, args)
 

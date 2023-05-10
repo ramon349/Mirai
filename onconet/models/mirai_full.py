@@ -30,6 +30,7 @@ class MiraiFull(nn.Module):
 
     def forward(self, x, risk_factors=None, batch=None):
         B, C, N, H, W = x.size()
+        pdb.set_trace()
         x = x.transpose(1,2).contiguous().view(B*N, C, H, W)
         risk_factors_per_img =  (lambda N, risk_factors: [factor.expand( [N, *factor.size()]).contiguous().view([-1, factor.size()[-1]]).contiguous() for factor in risk_factors])(N, risk_factors) if risk_factors is not None else None
         _, img_x, _ = self.image_encoder(x, risk_factors_per_img, batch)
@@ -47,7 +48,6 @@ def getActivation(name):
 class MiraiFullDebias(nn.Module):
     def __init__(self, args):
         super(MiraiFullDebias, self).__init__()
-        pdb.set_trace()
         self.args = args
         if args.img_encoder_snapshot is not None:
             self.image_encoder = load_model(args.img_encoder_snapshot, args, do_wrap_model=False)
@@ -64,14 +64,15 @@ class MiraiFullDebias(nn.Module):
             self.transformer = get_model_by_name('transformer', False, args)
         args.img_only_dim = self.transformer.args.transfomer_hidden_dim
         self.bias_classi = nn.Sequential(
-            nn.Linear(args.img_only_dim,256),
+            nn.Linear(args.img_only_dim,512),
             nn.ReLU(), 
-            nn.Linear(256,3)
+            nn.Linear(512,3)
         ) 
         self.transformer.transformer.transformer_layer_0.multihead_attention.query.register_forward_hook(getActivation('query')) 
 
     def forward(self, x, risk_factors=None, batch=None):
-        B, C, N, H, W = x.size()
+        B, C, N, H, W = x.size() 
+        pdb.set_trace()
         x = x.transpose(1,2).contiguous().view(B*N, C, H, W)
         risk_factors_per_img =  (lambda N, risk_factors: [factor.expand( [N, *factor.size()]).contiguous().view([-1, factor.size()[-1]]).contiguous() for factor in risk_factors])(N, risk_factors) if risk_factors is not None else None
         _, img_x, _ = self.image_encoder(x, risk_factors_per_img, batch)

@@ -25,7 +25,7 @@ DEVICE_TO_ID = {'Lorad Selenia': 1,
                 'Selenia Dimensions C-View':3}
 
 DATASET_ITEM_KEYS = ['ssn', 'exam','birads', 'y_seq', 'y_mask', 'time_at_event', 'device', 'device_is_known',
-            'time_seq', 'view_seq', 'side_seq', 'y_l', 'y_r', 'y_seq_r', 'y_mask_r', 'time_at_event_r', 'y_seq_l', 'y_mask_l', 'time_at_event_l']
+            'time_seq', 'view_seq', 'side_seq', 'y_l', 'y_r', 'y_seq_r', 'y_mask_r', 'time_at_event_r', 'y_seq_l', 'y_mask_l', 'time_at_event_l','ethnicity'] 
 
 class Abstract_Onco_Dataset(data.Dataset):
     """
@@ -104,7 +104,7 @@ class Abstract_Onco_Dataset(data.Dataset):
             label: weight_per_label/count for label, count in label_counts.items()
             }
         if args.year_weighted_class_bal or args.class_bal:
-            print("Label weights are {}".format(label_weights))
+            print("Label weights are {}".format(label_weights)) 
         self.weights = [ label_weights[d[dist_key]] for d in self.dataset]
 
 
