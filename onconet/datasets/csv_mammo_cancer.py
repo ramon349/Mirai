@@ -304,10 +304,8 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
 
         metadata = dict_dataset.values()
         dataset = []
-
         for mrn_row in tqdm.tqdm(metadata):
             ssn, exams = mrn_row['pid'],  mrn_row['exams']
-            ethnic_info =self.encode_dem(mrn_row['ethnicity'])
             if mrn_row['split'] != split_group:
                 continue
 
@@ -326,6 +324,7 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
                     all_views =( [0]*len(right_ccs) + [1]*len(right_mlos) + [0]*len(left_ccs) + [1]*len(left_mlos) )
                     all_sides =  [0]*len(right_ccs) + [0]*len(right_mlos) + [1]*len(left_ccs) + [1]*len(left_mlos)
                     time_stamps =  [0]*len(all_images)
+                    ethnic_info =self.encode_dem(exam['ethnicity'])
 
                     dataset.append({
                         'paths': pad_to_length(all_images, '<PAD>', self.args.num_images),
@@ -367,11 +366,11 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
 
         return (valid_pos or valid_neg) 
     def encode_dem(self,row): 
-        if row['ethnicity']== 'African American  or Black':
+        if row == 'African American  or Black':
             return 0
-        if row['ethnicity']== 'Asian':
+        if row == 'Asian':
             return 1 
-        if row['ethnicity']== 'Caucasian or White':
+        if row == 'Caucasian or White':
             return 2 
 
 

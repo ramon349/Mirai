@@ -5,11 +5,9 @@ import torch.nn as nn
 import pdb
 import numpy as np 
 from collections import defaultdict 
-
-
+activation=defaultdict(list) 
 @RegisterModel("mirai_full")
 class MiraiFull(nn.Module):
-
     def __init__(self, args):
         super(MiraiFull, self).__init__()
         self.args = args
@@ -40,11 +38,16 @@ class MiraiFull(nn.Module):
         logit, transformer_hidden, activ_dict = self.transformer(img_x, risk_factors, batch)
         return logit, transformer_hidden, activ_dict
 
-activation=defaultdict(list) 
+def getActivation(name):
+    # the hook signature
+    def hook(model, args ,outputs):
+        activation[name].append(outputs.cpu().numpy().mean().mean().mean())
+    return hook
 @RegisterModel("mirai_full_debias")
 class MiraiFullDebias(nn.Module):
     def __init__(self, args):
         super(MiraiFullDebias, self).__init__()
+        pdb.set_trace()
         self.args = args
         if args.img_encoder_snapshot is not None:
             self.image_encoder = load_model(args.img_encoder_snapshot, args, do_wrap_model=False)
@@ -61,16 +64,11 @@ class MiraiFullDebias(nn.Module):
             self.transformer = get_model_by_name('transformer', False, args)
         args.img_only_dim = self.transformer.args.transfomer_hidden_dim
         self.bias_classi = nn.Sequential(
-            nn.Linear(args.img_only_dim,512)
+            nn.Linear(args.img_only_dim,256),
             nn.ReLU(), 
-            nn.Linear(512,3)
+            nn.Linear(256,3)
         ) 
         self.transformer.transformer.transformer_layer_0.multihead_attention.query.register_forward_hook(getActivation('query')) 
-    def getActivation(name):
-        # the hook signature
-        def hook(model, args ,outputs):
-            activation[name].append(outputs.cpu().numpy().mean().mean().mean())
-        return hook
 
     def forward(self, x, risk_factors=None, batch=None):
         B, C, N, H, W = x.size()

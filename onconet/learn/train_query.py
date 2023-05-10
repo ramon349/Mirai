@@ -14,6 +14,7 @@ from onconet.learn.step import model_step, adv_step
 import warnings
 import pdb
 import pandas as pd 
+from collections import defaultdict 
 tqdm.monitor_interval=0
 
 NUM_RESAMPLES_DURING_TRAIN = 100

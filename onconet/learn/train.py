@@ -420,6 +420,7 @@ def get_hiddens(dataset, models, args):
     img_paths = []
     torch.set_grad_enabled(volatile)
     for batch in tqdm(data_loader):
+        pdb.set_trace()
 
         if batch is None:
             warnings.warn('Empty batch')
