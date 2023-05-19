@@ -285,7 +285,7 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
             view = "{} {}".format(row['laterality'], row['view'])
             accession = "{}\t{}".format(patient_id, exam_id)
             file = row['file_path']
-            ethnic_info =  row['ethnicity']
+            ethnic_info =  self.encode_dem(row['ethnicity'])
             dict_dataset[patient_id]['split'] = split
             dict_dataset[patient_id]['pid'] = patient_id
             if 'exams' not in dict_dataset[patient_id]:
@@ -296,11 +296,12 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
                     'years_to_last_followup': int(float(row['years_to_last_followup'])),
                     'views': [],
                     'files': [],
-                    'accession': accession,
-                    'ethnicity':ethnic_info
+                    'ethnicity':[],
+                    'accession': accession
                 }
             dict_dataset[patient_id]['exams'][accession]['views'].append(view)
             dict_dataset[patient_id]['exams'][accession]['files'].append(file)
+            dict_dataset[patient_id]['exams'][accession]['ethnicity'].append(ethnic_info)
 
         metadata = dict_dataset.values()
         dataset = []
@@ -324,7 +325,7 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
                     all_views =( [0]*len(right_ccs) + [1]*len(right_mlos) + [0]*len(left_ccs) + [1]*len(left_mlos) )
                     all_sides =  [0]*len(right_ccs) + [0]*len(right_mlos) + [1]*len(left_ccs) + [1]*len(left_mlos)
                     time_stamps =  [0]*len(all_images)
-                    ethnic_info =self.encode_dem(exam['ethnicity'])
+                    ethnic_info = exam['ethnicity'] 
                     dataset.append({
                         'paths': pad_to_length(all_images, '<PAD>', self.args.num_images),
                         'y': y,
@@ -333,7 +334,7 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
                         'time_at_event': time_at_event,
                         'exam': exam['accession'],
                         'ssn': ssn,
-                        'ethnicity':ethnic_info,
+                        'ethnicity':pad_to_length(ethnic_info,4,self.args.num_images),
                         'time_seq': pad_to_length(time_stamps, MAX_TIME , self.args.num_images),
                         'view_seq': pad_to_length(all_views, MAX_VIEWS , self.args.num_images),
                         'side_seq': pad_to_length(all_sides, MAX_SIDES, self.args.num_images),
@@ -348,7 +349,10 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
                         'y_mask_r': y_mask,
                         'y_seq_r': y_seq,
                         'time_at_event_r': time_at_event
-                    })
+                    })  
+        if split_group =='train':
+            from scipy.stats import  entropy 
+            self.args.dem_entropy =  entropy([ e['ethnicity'][0]  for e in dataset ] )
         return dataset
 
     def get_summary_statement(self, dataset, split_group):
@@ -370,7 +374,7 @@ class CSV_Mammo_Cancer_Survival_All_Images_Dataset_debias(Abstract_Onco_Dataset)
         if row == 'Asian' or row =='1':
             return 1 
         if row == 'Caucasian or White' or row =='2':
-            return 2 
+            return 1
         else: 
             return row 
 

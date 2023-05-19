@@ -36,4 +36,32 @@ class Discriminator(nn.Module):
             hidden = self.relu( self.bn1( self.fc1(x) ))
             hidden = self.relu( self.bn2( self.fc2(hidden) ))
             z = self.fc3( hidden)
-            return z
+            return z 
+@RegisterModel("bias_discriminator") 
+class BiasDiscriminator(nn.Module): 
+    def __init__(self, args): 
+        super(BiasDiscriminator, self).__init__()
+        self.args = args
+        num_logits = args.num_debias_classes if not args.survival_analysis_setup else args.max_followup
+        if self.args.adv_on_logits_alone:
+            self.fc1 = nn.Linear(num_logits, 2)
+        else:
+            if self.args.use_risk_factors:
+                hidden_dim = args.img_only_dim
+            else:
+                hidden_dim = args.hidden_dim
+            self.fc1 = nn.Linear(hidden_dim + num_logits, hidden_dim)
+            self.bn1 = nn.BatchNorm1d(hidden_dim)
+            self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+            self.bn2 = nn.BatchNorm1d(hidden_dim)
+            self.fc3 = nn.Linear(hidden_dim, 2)
+            self.relu = nn.ReLU()
+
+    def forward(self, x):
+        if self.args.adv_on_logits_alone:
+            return self.fc1(x)
+        else:
+            hidden = self.relu( self.bn1( self.fc1(x) ))
+            hidden = self.relu( self.bn2( self.fc2(hidden) ))
+            z = self.fc3( hidden)
+            return z 

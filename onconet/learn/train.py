@@ -63,13 +63,17 @@ def get_train_variables(args, model):
             models["neg_adv"] = model_factory.get_model_by_name(adv_name, False, args)
 
             if args.add_repulsive_mmd:
-                models['repel_adv'] = model_factory.get_model_by_name(adv_name, False, args)
+                models['repel_adv'] = model_factory.get_model_by_name(adv_name, False, args) 
+        if args.dem_debias: 
+            adv_name = 'bias_discriminator'
+            models["adv"] = model_factory.get_model_by_name(adv_name, False, args)
         else:
             adv_name = 'cross_ent_discriminator'
             models["adv"] = model_factory.get_model_by_name(adv_name, False, args)
 
     # Setup optimizers
     optimizers = {}
+    pdb.set_trace()
     for name in models:
         model = models[name].to(args.device)
         optimizers[name] = model_factory.get_optimizer(model, args)

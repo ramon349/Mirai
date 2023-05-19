@@ -47,7 +47,7 @@ def get_dataset(args, transformers, test_transformers):
     args.exam_to_year_dict = {}
     args.exam_to_device_dict = {}
 
-    train = dataset_class(args, transformers, 'train')
+    train = dataset_class(args, transformers, 'train') 
     dev = dataset_class(args, test_transformers, 'dev')
     test = dataset_class(args, test_transformers, 'test')
     if args.survival_analysis_setup:

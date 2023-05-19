@@ -354,6 +354,12 @@ def parse_args():
     parser.add_argument('--resume', action='store_true', default=False, help='whether to resume if run has already been done')
     parser.add_argument('--ignore_warnings', action='store_true', default=False, help='ignore all warnings')
 
+    #adversarial debias cparams 
+    parser.add_argument('--dem_debias', action='store_true', default=True, help='Run the adversarial debiasing code. Classifier and transofmrer penalty')
+    parser.add_argument('--num_debias_classes', type=int, default=3, help='Number of dmeographic attributes to be predicted on')
+    parser.add_argument('--hidden_dim', type=int, default=512, help='Number of dmeographic attributes to be predicted on')
+
+
     args = parser.parse_args()
 
     # Set args particular to dataset

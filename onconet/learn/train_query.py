@@ -65,12 +65,15 @@ def get_train_variables(args, model):
 
             if args.add_repulsive_mmd:
                 models['repel_adv'] = model_factory.get_model_by_name(adv_name, False, args)
+        if args.dem_debias: 
+            adv_name = 'bias_discriminator'
+            models['adv'] = model_factory.get_model_by_name(adv_name,False,args)
         else:
             adv_name = 'cross_ent_discriminator'
             models["adv"] = model_factory.get_model_by_name(adv_name, False, args)
 
     # Setup optimizers
-    optimizers = {}
+    optimizers = {} 
     for name in models:
         model = models[name].to(args.device)
         optimizers[name] = model_factory.get_optimizer(model, args)
@@ -456,7 +459,7 @@ def prepare_batch(batch, args):
         x, y = x.to(args.device), y.to(args.device)
     for key in batch.keys():
         if args.cuda:
-            if 'region_' in key or 'y_' in key or 'device' in key or key == 'y' or '_seq' in key:
+            if 'region_' in key or 'y_' in key or 'device' in key or key == 'y' or '_seq' in key or 'ethnicity' in key:
                 batch[key] = batch[key].to(args.device)
     if args.use_risk_factors:
         risk_factors = [rf.to(args.device) for rf in batch['risk_factors']]

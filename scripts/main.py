@@ -19,10 +19,10 @@ import csv
 
 #Constants
 DATE_FORMAT_STR = "%Y-%m-%d:%H-%M-%S"
+torch.autograd.set_detect_anomaly(True)
 
 if __name__ == '__main__': 
-    torch.cuda.set_device(3)
-    args = parsing.parse_args()
+    args = parsing.parse_args() 
     if args.ignore_warnings:
         warnings.simplefilter('ignore')
 

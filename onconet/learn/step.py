@@ -144,7 +144,6 @@ def model_step(x, y, risk_factors, batch, models, optimizers, train_model,  args
         region_loss = get_region_loss(activ_dict, logit, batch, train_model, args)
         loss += args.regularization_lambda * region_loss
         reg_loss += args.regularization_lambda * region_loss
-
     if args.predict_birads:
         birads_loss = get_birads_loss(activ_dict, models['model'], batch, args)
         loss += args.predict_birads_lambda * birads_loss
@@ -161,22 +160,22 @@ def model_step(x, y, risk_factors, batch, models, optimizers, train_model,  args
         pred_masked_mammo_loss = activ_dict['pred_masked_mammo_loss'].mean() if args.data_parallel else activ_dict['pred_masked_mammo_loss']
         loss += args.pred_missing_mammos_lambda * pred_masked_mammo_loss
         reg_loss += args.pred_missing_mammos_lambda * pred_masked_mammo_loss
-
-    if args.dem_debias: 
-        gen_loss, adv_loss  = get_adv_loss(models, hidden, logit, batch, args)
-        adv_loss = adv_step(hidden, logit, batch, models, optimizers, train_model,  args)
-
-    if args.use_adv:
-        gen_loss, adv_loss  = get_adv_loss(models, hidden, logit, batch, args)
-        # Noew train discrim til loss below device entropy across train set
+    pdb.set_trace()
+    if args.use_adv: 
+        # Noew train discrim til loss below device entropy across train set 
         train_adv = not args.use_mmd_adv and train_model and (args.step_indx != 0 or not  args.train_adv_seperate)
         if train_adv :
             num_adv_steps = 0
-            adv_loss = adv_step(hidden, logit, batch, models, optimizers, train_model,  args)
-            while adv_loss > args.device_entropy and num_adv_steps < args.num_adv_steps and not args.train_adv_seperate:
-                num_adv_steps += 1
-                adv_loss = adv_step(hidden, logit, batch, models, optimizers, train_model,  args)
-
+            adv_loss = adv_align_step(hidden, logit, batch, models, optimizers, train_model,  args,activ_dict['query_acti']) 
+            if args.dem_debias: 
+                while adv_loss > args.dem_entropy and num_adv_steps < args.num_adv_steps and not args.train_adv_seperate:
+                    num_adv_steps += 1
+                    adv_loss = adv_step(hidden, logit, batch, models, optimizers, train_model,  args)
+            else: 
+                while adv_loss > args.device_entropy and num_adv_steps < args.num_adv_steps and not args.train_adv_seperate:
+                    num_adv_steps += 1
+                    adv_loss = adv_step(hidden, logit, batch, models, optimizers, train_model,  args)
+        gen_loss, adv_loss  = get_adv_loss(models, hidden, logit, batch, args)
         if args.anneal_adv_loss:
             args.curr_adv_lambda +=  args.adv_loss_lambda/ 10000
             adv_loss_lambda = min( args.curr_adv_lambda, args.adv_loss_lambda)
@@ -191,8 +190,8 @@ def model_step(x, y, risk_factors, batch, models, optimizers, train_model,  args
             reg_loss *= 0
 
     loss /= args.batch_splits
-    adv_loss /= args.batch_splits
-    reg_loss /= args.batch_splits
+    adv_loss = adv_loss / args.batch_splits
+    reg_loss = reg_loss /  args.batch_splits
 
     if train_model:
         args.step_indx =  (args.step_indx + 1) % (args.num_adv_steps+1)
@@ -219,6 +218,8 @@ def model_step(x, y, risk_factors, batch, models, optimizers, train_model,  args
 def get_adv_loss(models, hidden, logit,  batch, args):
     if args.use_mmd_adv:
         return get_mmd_loss(models, hidden, logit,  batch, args)
+    if args.dem_debias:
+        return get_cross_entropy_adv_loss_debias(models, hidden, logit,  batch, args)
     else:
         return get_cross_entropy_adv_loss(models, hidden, logit,  batch, args)
 
@@ -241,7 +242,7 @@ def get_cross_entropy_adv_loss(models, hidden, logit,  batch, args):
     img_hidden = hidden[:,:args.img_only_dim] if args.use_risk_factors else hidden
     img_only_dim = img_hidden.size()[-1]
     device, device_known, y = batch['device'], batch['device_is_known'].float(), batch['y']
-    if args.use_precomputed_hiddens or args.model_name == 'mirai_full':
+    if args.use_precomputed_hiddens or args.model_name == 'mirai_full' or args.model_name=='mirai_full_debias':
         B, N, _ = hidden.size()
         _, C = logit.size()
         y = y.unsqueeze(0).transpose(0,1).expand_as(device)
@@ -258,6 +259,44 @@ def get_cross_entropy_adv_loss(models, hidden, logit,  batch, args):
 
     adv_loss_per_sample = F.cross_entropy(device_logit, device, reduce=False) * device_known
     adv_loss = torch.sum(adv_loss_per_sample) / (torch.sum(device_known) + 1e-6)
+    gen_loss = -adv_loss
+    return gen_loss, adv_loss
+def get_cross_entropy_adv_loss_debias(models, hidden, logit,  batch, args):
+    '''
+        Return generator, and adversary loss according to ability of advesary to disnguish device
+        , as defined in https://papers.nips.cc/paper/5423-generative-adversarial-nets.pdf.
+        Idea is based on domain classifier
+        args:
+        - models: dict of avaialble models. adv must be defined
+        - hidden: hidden representation of generated distribution
+        - logit: score distrubution given those hiddens
+        - batch: full batch dict
+        - args: run time args
+        returns:
+        - gen_loss: loss to update generator, or in most cases, network to regularize
+        - adv_loss: loss to update adversary.
+    '''
+    adv = models['adv'] 
+    img_hidden = hidden[:,:args.img_only_dim] if args.use_risk_factors else hidden
+    img_only_dim = img_hidden.size()[-1]
+    device , y = batch['ethnicity'], batch['y']
+    if args.use_precomputed_hiddens or args.model_name == 'mirai_full' or args.model_name=='mirai_full_debias':
+        B, N, _ = hidden.size()
+        _, C = logit.size()
+        y = y.unsqueeze(0)# i don't think we need all the other stuff  adam was using for this one. just align the values .transpose(0,1).expand_as(device)
+        logit = logit.unsqueeze(1).expand([B,N,C]).contiguous().view([-1, C])
+        y = y.contiguous().view(-1)
+        device = device.view(-1)
+        img_hidden = img_hidden.view( [-1, img_only_dim])
+
+    if args.adv_on_logits_alone:
+        device_logit = adv(logit)
+    else:
+        device_logit = adv(torch.cat([img_hidden, logit.detach()], dim=1))
+
+    adv_loss_per_sample = F.cross_entropy(device_logit, device, reduce=False) 
+    #* device_known
+    adv_loss = torch.sum(adv_loss_per_sample) / (device.shape[0])
     gen_loss = -adv_loss
     return gen_loss, adv_loss
 
@@ -346,5 +385,30 @@ def adv_step(hidden, logit, batch, models, optimizers, train_model,  args):
         adv_loss.backward(retain_graph=True)
         optimizers['adv'].step()
         optimizers['adv'].zero_grad()
-    return  adv_loss
+    return  adv_loss 
+def adv_align_step(hidden, logit, batch, models, optimizers, train_model,  args,model_actis):
+    '''
+        Single step of running kl adversary on the a batch x,y and computing
+        its loss. Backward pass is computed if train_model=True.
+        Returns loss
+        args:
+        - hidden: hidden features
+        - logit: estimate of posterior
+        - batch: whole batch dict, can be used by various special args
+        - models: dict of models. The main model, named "model" must return logit, hidden, activ
+        - train_model: whether or not to compute backward on loss
+        - args: various runtime args such as batch_split etc
+        returns:
+        - losses, a dict of losses containing 'klgan' with the kl adversary loss
+    '''
+
+    hidden_with_no_hist, logit_no_hist = hidden.detach(), logit.detach()
+    pdb.set_trace()
+
+    _, adv_loss = get_adv_loss(models, hidden_with_no_hist, logit_no_hist, batch, args)
+    if train_model:
+        adv_loss.backward(retain_graph=True)
+        optimizers['adv'].step()
+        optimizers['adv'].zero_grad()
+    return  adv_loss 
 
