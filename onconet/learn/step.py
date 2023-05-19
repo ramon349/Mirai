@@ -403,7 +403,6 @@ def adv_align_step(hidden, logit, batch, models, optimizers, train_model,  args,
     '''
 
     hidden_with_no_hist, logit_no_hist = hidden.detach(), logit.detach()
-    pdb.set_trace()
 
     _, adv_loss = get_adv_loss(models, hidden_with_no_hist, logit_no_hist, batch, args)
     if train_model:
